@@ -1,0 +1,7 @@
+Biên dịch
+
+gcc server/main.c server/libs/user_manager.c -o server_app -pthread
+gcc client/main.c -o client_app -pthread
+
+./server_app
+./client_app
