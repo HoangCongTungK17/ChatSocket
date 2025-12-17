@@ -1,21 +1,138 @@
-[2025-12-15 21:56:37] Server started on port 5500...
-[2025-12-15 21:57:26] New connection accepted from 127.0.0.1:40424
-[2025-12-15 21:59:08] Server started on port 5500...
-[2025-12-15 21:59:51] New connection accepted from 127.0.0.1:40472
-[2025-12-15 22:08:04] Server started on port 5500...
-[2025-12-15 22:08:14] Connection accepted from 127.0.0.1:40502
-[2025-12-15 22:08:33] Connection accepted from 127.0.0.1:40506
-[2025-12-15 22:08:56] Received from sock 4: hello
-[2025-12-15 22:09:03] Received from sock 5: hi
-[2025-12-15 22:30:00] Server started on port 5500...
-[2025-12-15 22:30:13] Connection accepted from 127.0.0.1:40674
-[2025-12-15 22:30:40] New user registered: 'tung'
-[2025-12-15 22:32:12] User 'tung' (ID: 1) logged in.
-[2025-12-15 22:45:00] Server started on port 5500...
-[2025-12-15 22:46:55] Server started on port 5500...
-[2025-12-15 22:47:34] User 'tung' logged in.
-[2025-12-15 23:00:10] Server started on port 5500...
-[2025-12-15 23:00:54] User 'tung' logged in.
-[2025-12-15 23:03:41] RECV from (sock 4): 1|tung|123
-[2025-12-15 23:05:22] RECV from (sock 5): 2|user1|123
-[2025-12-15 23:05:47] RECV from (sock 5): 1|user1|123
+[2025-12-16 15:21:19] Server started on port 5500...
+[2025-12-16 15:21:37] Co ket noi moi tu socket: 4
+[2025-12-16 15:22:12] RECV from sock 4: 1|tung|123
+[2025-12-16 15:22:12] SENT to sock 4: 100|Login successful!
+[2025-12-16 15:26:23] RECV from sock 4: 7|user1|heloo
+[2025-12-16 15:26:23] SENT to sock 4: 102|User offline. Saved.
+[2025-12-16 15:26:35] RECV from sock 4: 7|user1|chao
+[2025-12-16 15:26:35] SENT to sock 4: 102|User offline. Saved.
+[2025-12-16 15:28:04] Co ket noi moi tu socket: 5
+[2025-12-16 15:28:11] RECV from sock 5: 1|user1|123
+[2025-12-16 15:28:11] SENT to sock 5: 100|Login successful!
+[2025-12-16 15:28:24] RECV from sock 5: 13|tung
+[2025-12-16 15:28:24] SENT to sock 5: 102|--- PRIVATE HISTORY: tung ---
+[2025-12-15 23:21:49] tung: hello
+[2025-12-15 23:22:21] user1: chao
+[2025-12-16 10:37:49] user1: hello
+[2025-12-16 10:38:04] tung: chao
+[2025-12-16 10:39:53] tung: exit
+[2025-12-16 12:52:09] tung: hello
+[2025-12-16 12:52:21] user1: hi
+[2025-12-16 15:26:23] tung: heloo
+[2025-12-16 15:26:35] tung: chao
+
+[2025-12-16 15:28:40] RECV from sock 5: 7|tung|chao cai gi
+[2025-12-16 15:28:40] SENT to sock 4: 7|user1|chao cai gi
+[2025-12-16 15:28:57] RECV from sock 4: 7|user1|on rồi à
+[2025-12-16 15:28:57] SENT to sock 5: 7|tung|on rồi à
+[2025-12-17 07:32:15] Server started on port 5500...
+[2025-12-17 07:32:42] Co ket noi moi tu socket: 4
+[2025-12-17 07:32:49] 1|tung|123
+[2025-12-17 07:32:49] 100|Login successful!
+[2025-12-17 07:34:48] Co ket noi moi tu socket: 5
+[2025-12-17 07:34:54] 1|user1|123
+[2025-12-17 07:34:54] 100|Login successful!
+[2025-12-17 07:36:26] 9|ltm
+[2025-12-17 07:36:26] 100|Room 'ltm' created.
+[2025-12-17 07:39:54] 11|ltm
+[2025-12-17 07:39:54] 100|You are already in room 'ltm'
+[2025-12-17 07:40:57] 10|user1|ltm
+[2025-12-17 07:40:57] 10|tung|ltm
+[2025-12-17 07:40:57] 100|Invitation sent to user1
+[2025-12-17 07:41:47] 11|ltm
+[2025-12-17 07:41:47] 100|Joined room 'ltm' successfully
+[2025-12-17 07:42:00] 11|ltm
+[2025-12-17 07:42:00] 100|You are already in room 'ltm'
+[2025-12-17 07:42:04] 8|ltm|hello
+[2025-12-17 07:42:04] 8|ltm|tung: hello
+[2025-12-17 07:42:11] 8|ltm|chao
+[2025-12-17 07:42:11] 8|ltm|user1: chao
+[2025-12-17 07:42:46] 4|
+[2025-12-17 07:42:46] 102|--- FRIEND LIST ---
+user1 - [ONLINE]
+user2 - [OFFLINE]
+
+[2025-12-17 07:43:45] Co ket noi moi tu socket: 6
+[2025-12-17 07:43:59] 2|user3|123
+[2025-12-17 07:43:59] 100|Signup successful!
+[2025-12-17 07:44:23] 1|user3|123
+[2025-12-17 07:44:23] 100|Login successful!
+[2025-12-17 07:44:51] 5|user3
+[2025-12-17 07:44:51] 100|Request sent to user3
+[2025-12-17 07:45:17] 6|
+[2025-12-17 07:45:17] 102|Pending Requests: tung, 
+Usage: 6|username to accept.
+[2025-12-17 07:45:34] 6|tung
+[2025-12-17 07:45:34] 100|You are now friends with tung
+[2025-12-17 07:55:19] 13|ltm
+[2025-12-17 07:55:19] 102|--- GROUP HISTORY: ltm ---
+[2025-12-17 07:42:04] tung: hello
+[2025-12-17 07:42:11] user1: chao
+
+[2025-12-17 07:57:29] Server started on port 5500...
+[2025-12-17 09:29:21] Server started on port 5500...
+[2025-12-17 09:30:12] Co ket noi moi tu socket: 4
+[2025-12-17 09:30:32] Co ket noi moi tu socket: 5
+[2025-12-17 09:33:17] Co ket noi moi tu socket: 6
+[2025-12-17 09:49:34] 1|tung|123
+[2025-12-17 09:49:34] 100|Login successful!
+[2025-12-17 09:50:00] 2|user4|123
+[2025-12-17 09:50:00] 100|Signup successful!
+[2025-12-17 09:50:49] 1|user1|123
+[2025-12-17 09:50:49] 100|Login successful!
+[2025-12-17 09:51:03] 7|user1|hello
+[2025-12-17 09:51:03] 7|tung|hello
+[2025-12-17 09:51:24] 7|tung|chao
+[2025-12-17 09:51:24] 7|user1|chao
+[2025-12-17 09:51:49] 9|nhom11ltm
+[2025-12-17 09:51:49] 100|Room 'nhom11ltm' created.
+[2025-12-17 09:53:50] 11|nhom11ltm
+[2025-12-17 09:53:50] 100|You are already in room 'nhom11ltm'
+[2025-12-17 09:53:58] 8|nhom11ltm|hello
+[2025-12-17 09:54:56] 10|user1|nhom11ltm
+[2025-12-17 09:54:56] 10|tung|nhom11ltm
+[2025-12-17 09:54:56] 100|Invitation sent to user1
+[2025-12-17 09:56:42] 7|tung|3
+[2025-12-17 09:56:42] 7|user1|3
+[2025-12-17 09:58:03] 10|user1|nhom11ltm
+[2025-12-17 09:58:03] 10|tung|nhom11ltm
+[2025-12-17 09:58:03] 100|Invitation sent to user1
+[2025-12-17 09:58:12] 11|3
+[2025-12-17 09:58:12] 101|Room not found
+[2025-12-17 10:00:36] 11|nhom11
+[2025-12-17 10:00:36] 101|Room not found
+[2025-12-17 10:00:45] 4|
+[2025-12-17 10:00:45] 102|--- FRIEND LIST ---
+user1 - [ONLINE]
+user2 - [OFFLINE]
+user3 - [OFFLINE]
+
+[2025-12-17 10:01:07] 5|user4
+[2025-12-17 10:01:07] 100|Request sent to user4
+[2025-12-17 10:01:20] 1|user4|123
+[2025-12-17 10:01:20] 100|Login successful!
+[2025-12-17 10:01:34] 5|user4
+[2025-12-17 10:01:34] 101|Already friends or requested
+[2025-12-17 10:01:50] 6|
+[2025-12-17 10:01:50] 102|Danh sach loi moi: tung, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-17 10:02:04] 6|tung
+[2025-12-17 10:02:04] 100|You are now friends with tung
+[2025-12-17 10:02:23] 13|user1
+[2025-12-17 10:02:23] 102|--- PRIVATE HISTORY: user1 ---
+[2025-12-15 23:21:49] tung: hello
+[2025-12-15 23:22:21] user1: chao
+[2025-12-16 10:37:49] user1: hello
+[2025-12-16 10:38:04] tung: chao
+[2025-12-16 10:39:53] tung: exit
+[2025-12-16 12:52:09] tung: hello
+[2025-12-16 12:52:21] user1: hi
+[2025-12-16 15:26:23] tung: heloo
+[2025-12-16 15:26:35] tung: chao
+[2025-12-16 15:28:40] user1: chao cai gi
+[2025-12-16 15:28:57] tung: on rồi à
+[2025-12-17 09:51:03] tung: hello
+[2025-12-17 09:51:24] user1: chao
+[2025-12-17 09:56:42] user1: 3
+
+[2025-12-17 10:04:05] User 'tung' da ngat ket noi.

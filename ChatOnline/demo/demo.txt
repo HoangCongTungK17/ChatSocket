@@ -5,3 +5,21 @@ gcc client/main.c -o client_app -pthread
 
 ./server_app
 ./client_app
+
+
+Yêu cầu:
+•  Kết nối client server bằng socket (2 điểm)
+
+•  Ghi log các message nhận được và gửi đi bên server (1 điểm)
+
+•  Đăng ký và đăng nhập tài khoản người dùng (2 điểm)
+
+•  Xem danh sách bạn bè online và offline (2 điểm)
+
+•  Gửi yêu cầu kết bạn và chấp nhận yêu cầu kết bạn (2 điểm)
+
+•  Tạo nhóm chat, mời bạn bè tham gia nhóm chat, chấp nhận lời mời tham gia nhóm chat, rời khỏi nhóm chat (3 điểm)
+
+•  Gửi và nhận tin nhắn văn bản trong nhóm chat hoặc chat riêng (4 điểm)
+
+•  Xem lịch sử tin nhắn của mỗi cuộc trò chuyện (2 điểm)

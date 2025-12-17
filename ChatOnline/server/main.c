@@ -57,12 +57,26 @@ void log_message(const char *message)
         // printf("[%s] %s\n", time_str, message); // Uncomment nếu muốn in log hệ thống
         fclose(fp);
     }
+    else
+    {
+        // [QUAN TRỌNG] In lỗi ra màn hình nếu không mở được file
+        printf("\033[0;31m[ERROR] Khong the mo file log tai duong dan: %s\033[0m\n", LOG_FILE);
+        perror("Ly do loi"); // In chi tiết lỗi hệ thống (Permission denied, No such file...)
+    }
     pthread_mutex_unlock(&log_mutex);
 }
 
 void send_packet(int socket, const char *packet)
 {
-    printf("  [>>> SENT to sock %d]: %s\n", socket, packet);
+    // printf("  [>>> SENT to sock %d]: %s\n", socket, packet);
+    printf("%s\n", packet);
+
+    // char log_buf[BUFF_SIZE + 64];
+    // sprintf(log_buf, "SENT to sock %d: %s", socket, packet);
+    // log_message(log_buf);
+
+    log_message(packet);
+
     send(socket, packet, strlen(packet), 0);
 }
 
@@ -126,8 +140,8 @@ int find_room_index(const char *name)
     return -1;
 }
 
-// Tạo phòng mới
-int create_room_server(const char *room_name)
+//  Thêm tham số owner_name
+int create_room_server(const char *room_name, const char *owner_name)
 {
     pthread_mutex_lock(&rooms_mutex);
     if (find_room_index(room_name) != -1)
@@ -140,7 +154,11 @@ int create_room_server(const char *room_name)
         if (strlen(chat_rooms[i].name) == 0)
         { // Slot trống
             strcpy(chat_rooms[i].name, room_name);
-            chat_rooms[i].count = 0;
+
+            //  Thêm ngay người tạo vào slot đầu tiên
+            strcpy(chat_rooms[i].members[0], owner_name);
+            chat_rooms[i].count = 1; // Khởi tạo số lượng là 1
+
             pthread_mutex_unlock(&rooms_mutex);
             return 1; // Thành công
         }
@@ -148,7 +166,6 @@ int create_room_server(const char *room_name)
     pthread_mutex_unlock(&rooms_mutex);
     return -1; // Full phòng
 }
-
 // Tham gia phòng
 int join_room_server(const char *room_name, const char *username)
 {
@@ -265,7 +282,6 @@ void handle_group_chat(const char *sender, const char *room_name, const char *ms
     {
 
         save_room_chat(room_name, sender, msg);
-        // ---------------------------
 
         for (int i = 0; i < chat_rooms[idx].count; i++)
         {
@@ -321,7 +337,7 @@ void handle_list_friends(int sock, const char *username)
     {
         char line[MAX_USERNAME];
         char status[20];
-        char friend_info[128]; // [SỬA ĐỔI] Tăng size
+        char friend_info[128]; // Tăng size
 
         sprintf(response, "%d|--- FRIEND LIST ---\n", RES_DATA);
 
@@ -371,7 +387,13 @@ void *connection_handler(void *socket_desc)
     while ((read_size = recv(sock, buffer, BUFF_SIZE - 1, 0)) > 0)
     {
         buffer[read_size] = '\0';
-        printf("[<<< RECV from sock %d]: %s\n", sock, buffer);
+        // printf("[<<< RECV from sock %d]: %s\n", sock, buffer);
+        printf("%s\n", buffer);
+
+        // char log_buf[BUFF_SIZE + 64];
+        // sprintf(log_buf, "RECV from sock %d: %s", sock, buffer);
+        // log_message(log_buf);
+        log_message(buffer);
 
         char temp_buf[BUFF_SIZE];
         strcpy(temp_buf, buffer);
@@ -445,7 +467,7 @@ void *connection_handler(void *socket_desc)
             char *room_name = strtok(NULL, "|");
             if (current_user_id != -1 && room_name)
             {
-                int res = create_room_server(room_name);
+                int res = create_room_server(room_name, current_username);
                 if (res == 1)
                     sprintf(response, "%d|Room '%s' created.", RES_SUCCESS, room_name);
                 else
@@ -504,7 +526,8 @@ void *connection_handler(void *socket_desc)
             {
                 char list_buf[BUFF_SIZE];
                 get_friend_requests(current_username, list_buf);
-                snprintf(response, BUFF_SIZE, "%d|Pending Requests: %s\nUsage: 6|username to accept.", RES_DATA, list_buf);
+                // Hướng dẫn người dùng thao tác trên Menu
+                snprintf(response, BUFF_SIZE, "%d|Danh sach loi moi: %s\n(HD: Chon lai muc 7 va nhap ten de chap nhan)", RES_DATA, list_buf);
             }
             else
             {
@@ -652,6 +675,10 @@ void *connection_handler(void *socket_desc)
         remove_online_user(sock);
         remove_user_from_all_rooms(current_username); // [BỔ SUNG]
         printf("User %s disconnected.\n", current_username);
+
+        char log_buf[200];
+        sprintf(log_buf, "User '%s' da ngat ket noi.", current_username);
+        log_message(log_buf);
     }
 
     close(sock);
@@ -684,6 +711,7 @@ int main()
 
     listen(server_sock, 10);
     printf("SERVER STARTED ON PORT %d\n", PORT);
+    log_message("Server started on port 5500...");
     mkdir("server/data", 0700);
     mkdir(CHAT_DATA_DIR, 0700);
 
@@ -694,8 +722,12 @@ int main()
         if (client_sock < 0)
             continue;
 
+        char log_conn[100];
+        sprintf(log_conn, "Co ket noi moi tu socket: %d", client_sock);
+        log_message(log_conn);
+
         pthread_t sniffer_thread;
-        new_sock = malloc(1);
+        new_sock = malloc(sizeof(int));
         *new_sock = client_sock;
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *)new_sock) < 0)
             return 1;
