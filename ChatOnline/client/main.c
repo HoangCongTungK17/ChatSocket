@@ -30,6 +30,20 @@ volatile int login_success = 0; // Cờ kiểm tra đăng nhập thành công
 char my_username[MAX_USERNAME];
 char target_name[MAX_USERNAME]; // Lưu tên người/phòng đang chat
 
+// --- DANH SÁCH LƯU TẠM ĐỂ CHỌN NHANH ---
+#define MAX_PENDING 5
+
+// Lưu tên các phòng vừa được mời
+char pending_rooms[MAX_PENDING][64];
+int room_invite_count = 0;
+
+char joined_rooms[MAX_PENDING][64];
+int joined_room_count = 0;
+
+// Lưu tên các người gửi lời mời kết bạn
+char pending_friends[MAX_PENDING][64];
+int friend_invite_count = 0;
+
 // --- HÀM HỖ TRỢ GIAO DIỆN ---
 void clear_screen()
 {
@@ -68,7 +82,7 @@ void show_main_menu()
     printf("7. Chap nhan ket ban (Accept Friend)\n");
     printf("8. Lich su chat\n");
     printf("9. Dang xuat\n");
-    printf(">>> Chon: ");
+    printf(">>> Chon : ");
 }
 
 // --- LUỒNG NHẬN TIN NHẮN (RECEIVE THREAD) ---
@@ -122,12 +136,15 @@ void *recv_msg_handler(void *socket_desc)
             }
             else if (type == REQ_INVITE_ROOM)
             {
-                // Server gửi: 10|inviter|room_name
-                // param1 là inviter, param2 là room_name
-                printf("\n>>> [THONG BAO] Ban nhan duoc loi moi vao phong '%s' tu '%s'.\n", param2, param1);
-                printf(">>> Go lenh 'Join Room' (Menu 3) va nhap '%s' de tham gia.\n", param2);
-                printf("YOU: ");
-                fflush(stdout);
+                if (room_invite_count < MAX_PENDING)
+                {
+                    strncpy(pending_rooms[room_invite_count], param2, 63);
+                    printf("\n\033[1;33m[MOI PHONG %d]\033[0m %s moi ban vao '%s'.",
+                           room_invite_count + 1, param1, param2);
+                    printf("\n>>> Go 'Y%d' de vao ngay, hoac tiep tuc menu: ", room_invite_count + 1);
+                    room_invite_count++;
+                    fflush(stdout);
+                }
             }
             else if (type == REQ_CHAT_PRIVATE)
             {
@@ -147,6 +164,15 @@ void *recv_msg_handler(void *socket_desc)
                     fflush(stdout);
                 }
             }
+            // Thêm case xử lý thông báo kết bạn đến bất ngờ
+            else if (type == REQ_FRIEND_REQ) // Giả sử mã REQ_FRIEND_REQ là 8
+            {
+                // param1 lúc này là tên người gửi yêu cầu
+                printf("\n\033[1;35m[KET BAN]\033[0m %s vua gui loi moi ket ban cho ban!", param1);
+                printf("\n>>> Chon muc 7 de xem danh sach va chap nhan.");
+                printf("\n>>> ");
+                fflush(stdout);
+            }
             else if (type == REQ_CHAT_ROOM)
             {
                 // param1: room_name, param2: sender: message
@@ -165,6 +191,70 @@ void *recv_msg_handler(void *socket_desc)
                     fflush(stdout);
                 }
             }
+            else if (type == RES_DATA && strstr(param1, "Danh sach loi moi"))
+            {
+                // 1. In tiêu đề danh sách cho đẹp
+                printf("\n\033[1;32m--- DANH SÁCH LỜI MỜI KẾT BẠN ---\033[0m\n");
+
+                // 2. Tìm vị trí của danh sách tên (sau dấu ':')
+                char *list_part = strchr(param1, ':');
+                if (list_part)
+                {
+                    list_part++;             // Nhảy qua dấu ':'
+                    friend_invite_count = 0; // Reset đếm
+
+                    // 3. Tách tên, nhưng dừng lại nếu gặp dòng hướng dẫn (bắt đầu bằng dấu \n hoặc '(')
+                    char *name = strtok(list_part, ", \n");
+                    while (name && friend_invite_count < MAX_PENDING)
+                    {
+                        // Nếu chữ tách được bắt đầu bằng dấu ngoặc '(' thì đây là hướng dẫn, dừng lại ngay!
+                        if (name[0] == '(')
+                            break;
+
+                        // Lưu tên vào ngăn chứa tạm
+                        strncpy(pending_friends[friend_invite_count], name, 63);
+
+                        // In ra dòng chọn cực gọn:
+                        printf(" [%d] Chap nhan: %-15s -> Go 'A%d'\n",
+                               friend_invite_count + 1, name, friend_invite_count + 1);
+
+                        friend_invite_count++;
+                        name = strtok(NULL, ", \n");
+                    }
+                }
+
+                if (friend_invite_count == 0)
+                {
+                    printf(" (Trong)\n");
+                }
+                printf("----------------------------------\n>>> ");
+                fflush(stdout);
+            }
+
+            else if (type == RES_DATA && strstr(param1, "Danh sach phong"))
+            {
+                printf("\n\033[1;34m--- PHÒNG CỦA BẠN ---\033[0m\n");
+                char *list_part = strchr(param1, ':');
+                if (list_part)
+                {
+                    list_part++;
+                    joined_room_count = 0;
+                    char *name = strtok(list_part, ", \n");
+                    while (name && joined_room_count < MAX_PENDING)
+                    {
+                        strncpy(joined_rooms[joined_room_count], name, 63);
+                        printf(" [J%d] %-15s (Bam 'J%d' de vao)\n",
+                               joined_room_count + 1, name, joined_room_count + 1);
+                        joined_room_count++;
+                        name = strtok(NULL, ", \n");
+                    }
+                }
+                if (joined_room_count == 0)
+                    printf(" (Ban chua tham gia phong nao)\n");
+                printf("---------------------\n");
+                fflush(stdout);
+            }
+
             else if (type == RES_DATA) //  Xử lý hiển thị danh sách bạn/lịch sử
             {
                 printf("\n%s\n", param1 ? param1 : "");
@@ -267,15 +357,61 @@ void send_msg_handler(int sock)
         else if (current_state == STATE_MAIN_MENU)
         {
             show_main_menu();
-            if (scanf("%d", &choice) != 1)
-            {
-                while (getchar() != '\n')
-                    ;
-                continue;
-            }
-            while (getchar() != '\n')
-                ;
+            char input[64];
 
+            fgets(input, sizeof(input), stdin);
+
+            input[strcspn(input, "\n")] = 0;
+
+            // Kiểm tra lệnh tắt Y (Vào phòng)
+
+            if ((input[0] == 'Y' || input[0] == 'y') && strlen(input) > 1)
+
+            {
+
+                int idx = atoi(&input[1]) - 1;
+
+                if (idx >= 0 && idx < room_invite_count)
+
+                {
+
+                    sprintf(message, "%d|%s", REQ_JOIN_ROOM, pending_rooms[idx]);
+
+                    send(sock, message, strlen(message), 0);
+
+                    strcpy(target_name, pending_rooms[idx]);
+
+                    current_state = STATE_CHAT_ROOM;
+
+                    room_invite_count = 0;
+
+                    continue;
+                }
+            }
+
+            else if ((input[0] == 'A' || input[0] == 'a') && strlen(input) > 1)
+
+            {
+
+                int idx = atoi(&input[1]) - 1;
+
+                if (idx >= 0 && idx < friend_invite_count)
+
+                {
+
+                    sprintf(message, "%d|%s", REQ_FRIEND_ACCEPT, pending_friends[idx]);
+
+                    send(sock, message, strlen(message), 0);
+
+                    friend_invite_count = 0;
+
+                    sleep(1);
+
+                    continue;
+                }
+            }
+
+            choice = atoi(input);
             if (choice == 1)
             { // Chat Private
                 printf("Nhap username nguoi muon chat: ");
@@ -296,18 +432,77 @@ void send_msg_handler(int sock)
                 sleep(1);
             }
             else if (choice == 3)
-            { // Join Room
-                printf("Nhap ten phong muon vao: ");
-                fgets(target_name, sizeof(target_name), stdin);
-                target_name[strcspn(target_name, "\n")] = 0;
+            {
+                printf("\n\033[1;36m[HE THONG]\033[0m: Dang tai danh sach phong chat... (Nhan Enter)");
+                char wait_enter[10];
+                fgets(wait_enter, sizeof(wait_enter), stdin);
 
-                // Gửi lệnh join
-                sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
+                // 1. Gửi lệnh yêu cầu danh sách phòng (Giao thức tùy bạn, ví dụ gửi mã REQ_JOIN_ROOM kèm chuỗi trống)
+                sprintf(message, "%d|LIST", REQ_JOIN_ROOM);
                 send(sock, message, strlen(message), 0);
 
-                // Chuyển sang màn hình chat room
-                current_state = STATE_CHAT_ROOM;
-                sleep(1);
+                // 2. Đợi luồng Recv in danh sách phòng đã tham gia & danh sách mời
+                usleep(500000);
+
+                // 3. Hiển thị lại các lời mời đang chờ (nếu có) để người dùng chọn luôn
+                if (room_invite_count > 0)
+                {
+                    printf("\n\033[1;33m--- LOI MOI DANG CHO ---\033[0m\n");
+                    for (int i = 0; i < room_invite_count; i++)
+                    {
+                        printf(" [Y%d] %-15s (Bam 'Y%d' de chap nhan)\n", i + 1, pending_rooms[i], i + 1);
+                    }
+                    printf("------------------------\n");
+                }
+
+                // 4. Cho phép nhập lựa chọn ngay tại đây
+                printf("\n>>> Nhap phim tat (J1, Y1...) hoac ten phong (Go 'B' de quay lai): ");
+                fflush(stdout);
+
+                char sub_input[64];
+                fgets(sub_input, sizeof(sub_input), stdin);
+                sub_input[strcspn(sub_input, "\n")] = 0;
+
+                if (strlen(sub_input) == 0)
+                    continue;
+
+                if (strcmp(sub_input, "B") == 0 || strcmp(sub_input, "b") == 0)
+                {
+                    continue; // Thoát ra menu chính ngay lập tức
+                }
+
+                // Xử lý phím tắt J (Phòng đã tham gia)
+                if ((sub_input[0] == 'J' || sub_input[0] == 'j') && strlen(sub_input) > 1)
+                {
+                    int idx = atoi(&sub_input[1]) - 1;
+                    if (idx >= 0 && idx < joined_room_count)
+                    {
+                        strcpy(target_name, joined_rooms[idx]);
+                        sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
+                        send(sock, message, strlen(message), 0);
+                        // current_state = STATE_CHAT_ROOM;
+                    }
+                }
+                // Xử lý phím tắt Y (Lời mời mới)
+                else if ((sub_input[0] == 'Y' || sub_input[0] == 'y') && strlen(sub_input) > 1)
+                {
+                    int idx = atoi(&sub_input[1]) - 1;
+                    if (idx >= 0 && idx < room_invite_count)
+                    {
+                        strcpy(target_name, pending_rooms[idx]);
+                        sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
+                        send(sock, message, strlen(message), 0);
+                        current_state = STATE_CHAT_ROOM;
+                    }
+                }
+                // Nếu họ vẫn muốn nhập tên thủ công
+                else
+                {
+                    strcpy(target_name, sub_input);
+                    sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
+                    send(sock, message, strlen(message), 0);
+                    current_state = STATE_CHAT_ROOM;
+                }
             }
             else if (choice == 4)
             { //  Invite Friend to Room
@@ -341,21 +536,57 @@ void send_msg_handler(int sock)
                 sleep(1);
             }
             else if (choice == 7)
-            { // Accept Friend
-                printf("Nhap username muon chap nhan (Enter de xem danh sach): ");
-                fgets(target_name, sizeof(target_name), stdin);
-                target_name[strcspn(target_name, "\n")] = 0;
+            {
+                // 1. Bước chuẩn bị: Nhấn Enter để xem
+                printf("\n\033[1;36m[HUONG DAN]\033[0m: Nhan [Enter] de hien thi danh sach loi moi...");
+                char wait_enter[10];
+                fgets(wait_enter, sizeof(wait_enter), stdin);
 
-                if (strlen(target_name) == 0)
+                // 2. Gửi lệnh lấy danh sách
+                sprintf(message, "%d|", REQ_FRIEND_ACCEPT);
+                send(sock, message, strlen(message), 0);
+
+                // Đợi 0.5s để luồng Recv kịp in danh sách ra màn hình trước
+                usleep(500000);
+
+                // 3. THỰC HIỆN THAO TÁC NGAY TẠI ĐÂY
+                printf("\n\033[1;32m----------------- LUA CHON -----------------\033[0m\n");
+                printf("=> Nhap PHIM TAT (A1, A2...) de dong y.\n");
+                printf("=> Nhap BAT KY ky tu nao khac de thoat ra Menu.\n");
+                printf("--------------------------------------------\n");
+                printf(">>> Nhap lua chon: ");
+                fflush(stdout);
+
+                // Đọc lệnh nhập của người dùng ngay tại Sub-menu này
+                char sub_input[64];
+                fgets(sub_input, sizeof(sub_input), stdin);
+                sub_input[strcspn(sub_input, "\n")] = 0;
+
+                // Kiểm tra xem có phải phím tắt A1, A2... không
+                if ((sub_input[0] == 'A' || sub_input[0] == 'a') && strlen(sub_input) > 1)
                 {
-                    sprintf(message, "%d|", REQ_FRIEND_ACCEPT);
+                    int idx = atoi(&sub_input[1]) - 1;
+                    if (idx >= 0 && idx < friend_invite_count)
+                    {
+                        // Gửi lệnh chấp nhận lên Server ngay lập tức
+                        sprintf(message, "%d|%s", REQ_FRIEND_ACCEPT, pending_friends[idx]);
+                        send(sock, message, strlen(message), 0);
+
+                        // Đợi một chút để nhận thông báo thành công từ Server trước khi hiện lại Menu
+                        sleep(1);
+                    }
+                    else
+                    {
+                        printf("\n[LOI]: So thu tu khong hop le!\n");
+                        sleep(1);
+                    }
                 }
                 else
                 {
-                    sprintf(message, "%d|%s", REQ_FRIEND_ACCEPT, target_name);
+                    printf("\nDang quay lai Menu chinh...\n");
                 }
-                send(sock, message, strlen(message), 0);
-                sleep(1);
+
+                // Kết thúc case 7, chương trình sẽ tự động lặp lại và hiện Main Menu
             }
             else if (choice == 8)
             { // History
@@ -380,7 +611,7 @@ void send_msg_handler(int sock)
             clear_screen();
             if (current_state == STATE_CHAT_ROOM)
             {
-                printf("--- ROOM: %s (Go 'LEAVE' de roi phong) ---\n", target_name);
+                printf("--- ROOM: %s (Go 'LEAVE' de roi phong /'EXIT' de ra menu) ---\n", target_name);
             }
             else
             {

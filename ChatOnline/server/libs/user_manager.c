@@ -275,3 +275,65 @@ void get_friend_requests(const char *username, char *buffer)
         strcpy(buffer, "No requests.");
     }
 }
+// [File: server/libs/user_manager.c hoặc cuối server/main.c]
+#include <dirent.h> // Can thiet de quet thu muc
+
+// Hoang Tung Sua - Cap nhat theo cau truc thu muc cua ban
+void get_user_joined_rooms_server(const char *username, char *output)
+{
+    char chat_dir[] = "server/data/chat_data";
+    struct dirent *entry;
+    DIR *dp = opendir(chat_dir);
+
+    output[0] = '\0';
+    if (dp == NULL)
+        return;
+
+    while ((entry = readdir(dp)))
+    {
+        // Chỉ tìm các file bắt đầu bằng "ROOM_" và kết thúc bằng ".txt"
+        if (strncmp(entry->d_name, "ROOM_", 5) == 0 && strstr(entry->d_name, ".txt"))
+        {
+            char path[1024];
+            snprintf(path, sizeof(path), "%s/%s", chat_dir, entry->d_name);
+
+            FILE *f = fopen(path, "r");
+            if (f)
+            {
+                char line[256];
+                // Giả sử dòng đầu tiên của file ROOM_ là danh sách thành viên
+                // Hoặc bạn quét toàn bộ file để xem username có từng nhắn tin/tham gia không
+                if (fgets(line, sizeof(line), f))
+                {
+                    // Logic này tùy thuộc vào cách bạn ghi file.
+                    // Ở đây tôi ví dụ quét xem username có xuất hiện trong file hay không
+                    int found = 0;
+                    rewind(f);
+                    while (fgets(line, sizeof(line), f))
+                    {
+                        if (strstr(line, username))
+                        {
+                            found = 1;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                    {
+                        char room_name[128];
+                        // Cắt chữ "ROOM_" (5 ký tự) và đuôi ".txt" (4 ký tự)
+                        int name_len = strlen(entry->d_name) - 5 - 4;
+                        strncpy(room_name, entry->d_name + 5, name_len);
+                        room_name[name_len] = '\0';
+
+                        if (strlen(output) > 0)
+                            strcat(output, ", ");
+                        strcat(output, room_name);
+                    }
+                }
+                fclose(f);
+            }
+        }
+    }
+    closedir(dp);
+}

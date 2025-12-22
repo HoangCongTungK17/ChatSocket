@@ -20,7 +20,7 @@
 #define MAX_ROOM_MEMBERS 20
 
 // --- CẤU TRÚC DỮ LIỆU ---
-
+void get_user_joined_rooms_server(const char *username, char *output);
 typedef struct
 {
     int socket;
@@ -59,7 +59,7 @@ void log_message(const char *message)
     }
     else
     {
-        // [QUAN TRỌNG] In lỗi ra màn hình nếu không mở được file
+        // In lỗi ra màn hình nếu không mở được file
         printf("\033[0;31m[ERROR] Khong the mo file log tai duong dan: %s\033[0m\n", LOG_FILE);
         perror("Ly do loi"); // In chi tiết lỗi hệ thống (Permission denied, No such file...)
     }
@@ -166,34 +166,72 @@ int create_room_server(const char *room_name, const char *owner_name)
     pthread_mutex_unlock(&rooms_mutex);
     return -1; // Full phòng
 }
-// Tham gia phòng
+// [Trong file server/libs/room_manager.c hoặc tương tự]
 int join_room_server(const char *room_name, const char *username)
 {
+    char path[1024];
+    // HOÀNG TÙNG SỬA: Khớp với đường dẫn file thực tế của bạn
+    snprintf(path, sizeof(path), "server/data/chat_data/ROOM_%s.txt", room_name);
+
+    // 1. Kiểm tra sự tồn tại của file phòng trước (Source of Truth)
+    if (access(path, F_OK) == -1)
+    {
+        return -1; // Room not found (File không tồn tại)
+    }
+
     pthread_mutex_lock(&rooms_mutex);
+
+    // 2. Tìm index trong mảng RAM
     int idx = find_room_index(room_name);
+
+    // 3. Nếu file có nhưng RAM chưa có (do Server mới khởi động lại)
+    // Ta phải "kích hoạt" phòng này vào RAM
+    if (idx == -1)
+    {
+        // Giả sử bạn có hàm tạo/thêm phòng vào mảng chat_rooms
+        // Nếu chưa có, ta tìm một slot trống trong mảng chat_rooms
+        for (int i = 0; i < MAX_ROOMS; i++)
+        {
+            if (strlen(chat_rooms[i].name) == 0)
+            {
+                strcpy(chat_rooms[i].name, room_name);
+                chat_rooms[i].count = 0;
+                idx = i;
+                break;
+            }
+        }
+    }
+
+    // Nếu vẫn không tìm được slot trống trong RAM
     if (idx == -1)
     {
         pthread_mutex_unlock(&rooms_mutex);
-        return -1; // Không tìm thấy
+        return 0; // Server quá tải phòng
     }
 
-    // Kiểm tra xem đã trong phòng chưa
+    // 4. Kiểm tra xem user đã có trong danh sách thành viên (RAM) chưa
     for (int i = 0; i < chat_rooms[idx].count; i++)
     {
         if (strcmp(chat_rooms[idx].members[i], username) == 0)
         {
             pthread_mutex_unlock(&rooms_mutex);
-            return 2; // Đã tham gia rồi
+            return 2; // Đã tham gia rồi (thành công nhưng báo hiệu đã có mặt)
         }
     }
 
+    // 5. Thêm user vào danh sách thành viên trong RAM
     if (chat_rooms[idx].count < MAX_ROOM_MEMBERS)
     {
-        strcpy(chat_rooms[idx].members[chat_rooms[idx].count], username);
+        strncpy(chat_rooms[idx].members[chat_rooms[idx].count], username, MAX_USERNAME - 1);
         chat_rooms[idx].count++;
         pthread_mutex_unlock(&rooms_mutex);
-        return 1; // Thành công
+
+        // (Tùy chọn) Ghi thêm username vào file ROOM_...txt để lưu vĩnh viễn
+        // save_member_to_room_file(path, username);
+
+        return 1; // Tham gia mới thành công
     }
+
     pthread_mutex_unlock(&rooms_mutex);
     return 0; // Phòng đầy
 }
@@ -507,7 +545,26 @@ void *connection_handler(void *socket_desc)
                 {
                     int res = send_friend_request(current_username, target);
                     if (res == 1)
+                    {
                         sprintf(response, "%d|Request sent to %s", RES_SUCCESS, target);
+
+                        // GỬI THÔNG BÁO REAL-TIME CHO NGƯỜI NHẬN ---
+                        // 1. Tìm socket của người nhận (target)
+                        int target_sock = get_socket_by_username(target);
+
+                        // 2. Nếu tìm thấy socket (nghĩa là người nhận đang Online)
+                        if (target_sock != -1)
+                        {
+                            char notify[BUFF_SIZE];
+                            // Gói tin gửi cho người nhận: "MÃ_YÊU_CẦU | TÊN_NGƯỜI_GỬI"
+                            // Ví dụ: "6|tung"
+                            sprintf(notify, "%d|%s", REQ_FRIEND_REQ, current_username);
+
+                            // Gửi thông báo đến máy người nhận
+                            send_packet(target_sock, notify);
+                        }
+                        // ------------------------------------------------------------
+                    }
                     else if (res == 2)
                         sprintf(response, "%d|Already friends or requested", RES_ERROR);
                     else
@@ -516,6 +573,8 @@ void *connection_handler(void *socket_desc)
             }
             else
                 sprintf(response, "%d|Error params", RES_ERROR);
+
+            // Gửi phản hồi về cho người gửi (Tùng) để báo "Đã gửi thành công"
             send_packet(sock, response);
             break;
         }
@@ -573,14 +632,36 @@ void *connection_handler(void *socket_desc)
             char *room_name = strtok(NULL, "|");
             if (current_user_id != -1 && room_name)
             {
-                int res = join_room_server(room_name, current_username);
-                if (res == 1)
-                    sprintf(response, "%d|Joined room '%s' successfully", RES_SUCCESS, room_name);
-                else if (res == 2)
-                    sprintf(response, "%d|You are already in room '%s'", RES_SUCCESS, room_name);
+                // --- KIỂM TRA XEM LÀ LỆNH LẤY DANH SÁCH HAY LÀ VÀO PHÒNG ---
+                if (strcmp(room_name, "LIST") == 0)
+                {
+                    // Trường hợp người dùng lỡ quên tên, muốn xem danh sách phòng đã vào
+                    char room_list[BUFF_SIZE] = "";
+
+                    // Bạn cần viết hàm này để quét danh sách các phòng mà user đang tham gia
+                    get_user_joined_rooms_server(current_username, room_list);
+
+                    // Trả về mã RES_DATA (102) kèm danh sách phòng
+                    sprintf(response, "%d|Danh sach phong: %s", RES_DATA, room_list);
+                }
                 else
-                    sprintf(response, "%d|Room not found", RES_ERROR);
+                {
+                    // ---  VÀO PHÒNG THẬT SỰ ---
+                    int res = join_room_server(room_name, current_username);
+                    if (res == 1)
+                        sprintf(response, "%d|Joined room '%s' successfully", RES_SUCCESS, room_name);
+                    else if (res == 2)
+                        sprintf(response, "%d|You are already in room '%s'", RES_SUCCESS, room_name);
+                    else
+                        sprintf(response, "%d|Room not found", RES_ERROR);
+                }
             }
+            else
+            {
+                sprintf(response, "%d|Error params", RES_ERROR);
+            }
+
+            // Gửi gói tin (danh sách phòng hoặc kết quả join) về cho Client
             send_packet(sock, response);
             break;
         }

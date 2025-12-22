@@ -136,3 +136,168 @@ user3 - [OFFLINE]
 [2025-12-17 09:56:42] user1: 3
 
 [2025-12-17 10:04:05] User 'tung' da ngat ket noi.
+[2025-12-21 20:04:54] Server started on port 5500...
+[2025-12-21 20:05:16] Co ket noi moi tu socket: 4
+[2025-12-21 20:05:45] Co ket noi moi tu socket: 5
+[2025-12-21 20:05:55] 1|tung|123
+[2025-12-21 20:05:55] 100|Login successful!
+[2025-12-21 20:06:33] 2|user5|123
+[2025-12-21 20:06:33] 100|Signup successful!
+[2025-12-21 20:06:52] 1|user5|123
+[2025-12-21 20:06:52] 100|Login successful!
+[2025-12-21 20:07:12] 5|user5
+[2025-12-21 20:07:12] 100|Request sent to user5
+[2025-12-21 20:08:20] 5|
+[2025-12-21 20:08:20] 101|Error params
+[2025-12-21 20:08:30] 6|
+[2025-12-21 20:08:30] 102|Danh sach loi moi: tung, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 20:29:26] User 'tung' da ngat ket noi.
+[2025-12-21 20:29:26] User 'user5' da ngat ket noi.
+[2025-12-21 20:38:18] Server started on port 5500...
+[2025-12-21 20:38:41] Co ket noi moi tu socket: 4
+[2025-12-21 20:38:58] Co ket noi moi tu socket: 5
+[2025-12-21 20:39:11] 1|tung|123
+[2025-12-21 20:39:11] 100|Login successful!
+[2025-12-21 20:39:52] 9|game
+[2025-12-21 20:39:52] 100|Room 'game' created.
+[2025-12-21 20:40:49] 1|user5|123
+[2025-12-21 20:40:49] 100|Login successful!
+[2025-12-21 20:41:23] 10|user5|game
+[2025-12-21 20:41:23] 10|user5|game
+[2025-12-21 20:41:23] 100|Invitation sent to user5
+[2025-12-21 20:42:16] 10|user5|game
+[2025-12-21 20:42:16] 10|tung|game
+[2025-12-21 20:42:16] 100|Invitation sent to user5
+[2025-12-21 20:42:37] 11|game
+[2025-12-21 20:42:37] 100|Joined room 'game' successfully
+[2025-12-21 20:42:54] 8|game|EXit
+[2025-12-21 20:42:54] 8|game|user5: EXit
+[2025-12-21 20:43:44] 5|user5
+[2025-12-21 20:43:44] 101|Already friends or requested
+[2025-12-21 20:44:09] Co ket noi moi tu socket: 6
+[2025-12-21 20:44:20] 2|user1|123
+[2025-12-21 20:44:20] 101|User exists
+[2025-12-21 20:44:30] 1|user1|123
+[2025-12-21 20:44:30] 100|Login successful!
+[2025-12-21 20:44:46] 5|user5
+[2025-12-21 20:44:46] 100|Request sent to user5
+[2025-12-21 20:44:58] 4|
+[2025-12-21 20:44:58] 102|You have no friends yet.
+[2025-12-21 20:45:22] 4|
+[2025-12-21 20:45:22] 102|--- FRIEND LIST ---
+user1 - [ONLINE]
+user2 - [OFFLINE]
+user3 - [OFFLINE]
+user4 - [OFFLINE]
+
+[2025-12-21 20:45:43] 6|
+[2025-12-21 20:45:43] 102|Danh sach loi moi: tung, user1, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 21:00:10] User 'tung' da ngat ket noi.
+[2025-12-21 21:00:11] User 'user5' da ngat ket noi.
+[2025-12-21 21:00:11] User 'user1' da ngat ket noi.
+[2025-12-21 21:00:37] Server started on port 5500...
+[2025-12-21 21:00:55] Co ket noi moi tu socket: 4
+[2025-12-21 21:01:06] 1|tung|123
+[2025-12-21 21:01:06] 100|Login successful!
+[2025-12-21 21:01:14] User 'tung' da ngat ket noi.
+[2025-12-21 21:02:05] Server started on port 5500...
+[2025-12-21 21:02:44] Co ket noi moi tu socket: 4
+[2025-12-21 21:02:50] 1|tung|123
+[2025-12-21 21:02:50] 100|Login successful!
+[2025-12-21 21:03:09] Co ket noi moi tu socket: 5
+[2025-12-21 21:03:16] 1|user3|123
+[2025-12-21 21:03:16] 100|Login successful!
+[2025-12-21 21:03:35] Co ket noi moi tu socket: 6
+[2025-12-21 21:03:46] 1|user5|123
+[2025-12-21 21:03:46] 100|Login successful!
+[2025-12-21 21:04:07] 5|user6
+[2025-12-21 21:04:07] 101|User not found
+[2025-12-21 21:05:13] 5|user5
+[2025-12-21 21:05:13] 5|user3
+[2025-12-21 21:05:13] 100|Request sent to user5
+[2025-12-21 21:05:28] 6|
+[2025-12-21 21:05:28] 102|Danh sach loi moi: tung, user1, user3, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 21:05:52] 6|a3
+[2025-12-21 21:05:52] 101|Request not found or failed
+[2025-12-21 21:16:14] 6|
+[2025-12-21 21:16:14] 102|Danh sach loi moi: tung, user1, user3, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 21:16:24] 6|user3
+[2025-12-21 21:16:24] 100|You are now friends with user3
+[2025-12-21 21:24:49] User 'tung' da ngat ket noi.
+[2025-12-21 21:24:50] User 'user3' da ngat ket noi.
+[2025-12-21 21:24:50] User 'user5' da ngat ket noi.
+[2025-12-21 21:27:07] Server started on port 5500...
+[2025-12-21 21:27:25] Co ket noi moi tu socket: 4
+[2025-12-21 21:27:35] 1|user5|123
+[2025-12-21 21:27:35] 100|Login successful!
+[2025-12-21 21:27:46] 6|
+[2025-12-21 21:27:46] 102|Danh sach loi moi: tung, user1, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 21:28:25] 6|tung
+[2025-12-21 21:28:25] 100|You are now friends with tung
+[2025-12-21 21:32:35] User 'user5' da ngat ket noi.
+[2025-12-21 21:33:08] Server started on port 5500...
+[2025-12-21 21:33:22] Co ket noi moi tu socket: 4
+[2025-12-21 21:33:31] 1|user5|123
+[2025-12-21 21:33:31] 100|Login successful!
+[2025-12-21 21:33:35] 6|
+[2025-12-21 21:33:35] 102|Danh sach loi moi: user1, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 21:33:57] 6|
+[2025-12-21 21:33:57] 102|Danh sach loi moi: user1, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-21 21:33:59] 6|user1
+[2025-12-21 21:33:59] 100|You are now friends with user1
+[2025-12-21 21:39:32] User 'user5' da ngat ket noi.
+[2025-12-21 21:44:46] Server started on port 5500...
+[2025-12-21 21:45:32] Co ket noi moi tu socket: 4
+[2025-12-21 21:45:36] 1|tung|123
+[2025-12-21 21:45:36] 100|Login successful!
+[2025-12-21 21:46:06] 10|user5|nhom11
+[2025-12-21 21:46:06] 101|User user5 is offline
+[2025-12-21 21:46:30] Co ket noi moi tu socket: 5
+[2025-12-21 21:46:35] 1|user5|123
+[2025-12-21 21:46:35] 100|Login successful!
+[2025-12-21 21:47:00] 10|user5|nhom11
+[2025-12-21 21:47:00] 10|tung|nhom11
+[2025-12-21 21:47:00] 100|Invitation sent to user5
+[2025-12-21 21:47:22] 11|nhom11
+[2025-12-21 21:47:22] 101|Room not found
+[2025-12-21 21:47:39] 11|LIST
+[2025-12-21 21:47:39] 101|Room not found
+[2025-12-21 21:48:27] 11|nhom11
+[2025-12-21 21:48:27] 101|Room not found
+[2025-12-21 21:49:03] 11|LIST
+[2025-12-21 21:49:03] 101|Room not found
+[2025-12-21 21:49:46] 11|LIST
+[2025-12-21 21:49:46] 101|Room not found
+[2025-12-21 21:49:57] 11|nhom11
+[2025-12-21 21:49:57] 101|Room not found
+[2025-12-21 21:53:37] User 'tung' da ngat ket noi.
+[2025-12-21 21:53:37] User 'user5' da ngat ket noi.
+[2025-12-21 22:04:45] Server started on port 5500...
+[2025-12-21 22:05:01] Co ket noi moi tu socket: 4
+[2025-12-21 22:05:06] 1|tung|123
+[2025-12-21 22:05:06] 100|Login successful!
+[2025-12-21 22:05:10] 11|LIST
+[2025-12-21 22:05:10] 102|Danh sach phong: 
+[2025-12-21 22:07:42] 11|k
+[2025-12-21 22:07:42] 101|Room not found
+[2025-12-21 22:08:01] 11|LIST
+[2025-12-21 22:08:01] 102|Danh sach phong: 
+[2025-12-21 22:21:48] Server started on port 5500...
+[2025-12-21 22:22:01] Co ket noi moi tu socket: 4
+[2025-12-21 22:22:10] 1|tung|123
+[2025-12-21 22:22:10] 100|Login successful!
+[2025-12-21 22:22:15] 11|LIST
+[2025-12-21 22:22:15] 102|Danh sach phong: nhom11, nhom11ltm, ltm
+[2025-12-21 22:22:28] 11|nhom11
+[2025-12-21 22:22:28] 101|Room not found
+[2025-12-21 22:23:07] 11|LIST
+[2025-12-21 22:23:07] 102|Danh sach phong: nhom11, nhom11ltm, ltm
+[2025-12-21 22:23:10] 11|nhom11
+[2025-12-21 22:23:10] 101|Room not found
