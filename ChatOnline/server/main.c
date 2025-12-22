@@ -159,6 +159,15 @@ int create_room_server(const char *room_name, const char *owner_name)
             strcpy(chat_rooms[i].members[0], owner_name);
             chat_rooms[i].count = 1; // Khởi tạo số lượng là 1
 
+            char path[512];
+            sprintf(path, "server/data/chat_data/ROOM_%s.txt", room_name);
+            FILE *f = fopen(path, "a"); // "a" sẽ tạo file nếu chưa có
+            if (f)
+            {
+                fprintf(f, "[HE THONG] Phong '%s' duoc tao boi %s\n", room_name, owner_name);
+                fclose(f);
+            }
+
             pthread_mutex_unlock(&rooms_mutex);
             return 1; // Thành công
         }
@@ -166,11 +175,11 @@ int create_room_server(const char *room_name, const char *owner_name)
     pthread_mutex_unlock(&rooms_mutex);
     return -1; // Full phòng
 }
-// [Trong file server/libs/room_manager.c hoặc tương tự]
+
 int join_room_server(const char *room_name, const char *username)
 {
     char path[1024];
-    // HOÀNG TÙNG SỬA: Khớp với đường dẫn file thực tế của bạn
+    // Khớp với đường dẫn file thực tế của bạn
     snprintf(path, sizeof(path), "server/data/chat_data/ROOM_%s.txt", room_name);
 
     // 1. Kiểm tra sự tồn tại của file phòng trước (Source of Truth)
@@ -188,8 +197,6 @@ int join_room_server(const char *room_name, const char *username)
     // Ta phải "kích hoạt" phòng này vào RAM
     if (idx == -1)
     {
-        // Giả sử bạn có hàm tạo/thêm phòng vào mảng chat_rooms
-        // Nếu chưa có, ta tìm một slot trống trong mảng chat_rooms
         for (int i = 0; i < MAX_ROOMS; i++)
         {
             if (strlen(chat_rooms[i].name) == 0)
@@ -215,7 +222,7 @@ int join_room_server(const char *room_name, const char *username)
         if (strcmp(chat_rooms[idx].members[i], username) == 0)
         {
             pthread_mutex_unlock(&rooms_mutex);
-            return 2; // Đã tham gia rồi (thành công nhưng báo hiệu đã có mặt)
+            return 2; // Đã tham gia rồi
         }
     }
 
@@ -224,11 +231,20 @@ int join_room_server(const char *room_name, const char *username)
     {
         strncpy(chat_rooms[idx].members[chat_rooms[idx].count], username, MAX_USERNAME - 1);
         chat_rooms[idx].count++;
+
+        // --- ĐOẠN THAY ĐỔI: Ghi vào file để lưu vĩnh viễn và phục vụ hàm LIST ---
+        // Mở file ở chế độ "a" (append) để thêm dòng mới vào cuối file
+        FILE *f = fopen(path, "a");
+        if (f)
+        {
+            // Ghi dòng đánh dấu người dùng đã tham gia.
+            // Hàm get_user_joined_rooms_server sẽ tìm thấy username này bằng strstr()
+            fprintf(f, "[HE THONG] %s da tham gia phong.\n", username);
+            fclose(f);
+        }
+        // -----------------------------------------------------------------------
+
         pthread_mutex_unlock(&rooms_mutex);
-
-        // (Tùy chọn) Ghi thêm username vào file ROOM_...txt để lưu vĩnh viễn
-        // save_member_to_room_file(path, username);
-
         return 1; // Tham gia mới thành công
     }
 
@@ -334,6 +350,17 @@ void handle_group_chat(const char *sender, const char *room_name, const char *ms
                     send_packet(dest_sock, packet);
                 }
             }
+        }
+    }
+    else
+    {
+
+        int sender_sock = get_socket_by_username(sender);
+        if (sender_sock != -1)
+        {
+            char error_pkt[BUFF_SIZE];
+            sprintf(error_pkt, "%d|Room '%s' not found or you are not a member.", RES_ERROR, room_name);
+            send_packet(sender_sock, error_pkt);
         }
     }
     pthread_mutex_unlock(&rooms_mutex);

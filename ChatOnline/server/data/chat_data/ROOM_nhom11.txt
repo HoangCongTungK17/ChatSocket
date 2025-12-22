@@ -1,5 +1,6 @@
-[2025-12-16 10:48:35] user1: hello
-[2025-12-16 10:49:36] user1: hello
-[2025-12-16 10:50:10] user2: hư
-[2025-12-16 10:50:23] user2: hello
-[2025-12-16 10:50:56] tung: hallo
+[HE THONG] Phong 'nhom11' duoc tao boi tung
+[HE THONG] user1 da tham gia phong.
+[2025-12-22 17:25:09] tung: hello
+[2025-12-22 17:25:13] user1: hi
+[2025-12-22 17:25:27] tung: how are u
+[2025-12-22 17:25:30] user1: fine

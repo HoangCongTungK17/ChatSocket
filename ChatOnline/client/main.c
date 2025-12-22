@@ -113,15 +113,10 @@ void *recv_msg_handler(void *socket_desc)
             {
                 printf("\n[THONG BAO]: %s\n", param1 ? param1 : "Success");
 
+                // 1. Xử lý khi đăng nhập thành công
                 if (current_state == STATE_LOGIN_MENU)
                 {
-                    login_success = 1; // Báo hiệu đã đăng nhập thành công
-                }
-
-                if (current_state == STATE_MAIN_MENU) // Chỉ hiện "Enter" khi ở menu chính
-                {
-                    printf(">>> Nhan Enter de tiep tuc...");
-                    fflush(stdout);
+                    login_success = 1;
                 }
             }
             else if (type == RES_ERROR)
@@ -131,6 +126,13 @@ void *recv_msg_handler(void *socket_desc)
                 if (current_state == STATE_LOGIN_MENU)
                 {
                     login_success = -1; // Báo hiệu đăng nhập thất bại
+                }
+
+                if (current_state == STATE_CHAT_ROOM && strstr(param1, "not found"))
+                {
+                    current_state = STATE_MAIN_MENU;
+                    printf(">>> Phong khong hop le. Dang quay lai Menu chính...\n");
+                    fflush(stdout);
                 }
                 // ----------------
             }
@@ -381,7 +383,7 @@ void send_msg_handler(int sock)
 
                     strcpy(target_name, pending_rooms[idx]);
 
-                    current_state = STATE_CHAT_ROOM;
+                    // current_state = STATE_CHAT_ROOM;
 
                     room_invite_count = 0;
 
@@ -437,14 +439,14 @@ void send_msg_handler(int sock)
                 char wait_enter[10];
                 fgets(wait_enter, sizeof(wait_enter), stdin);
 
-                // 1. Gửi lệnh yêu cầu danh sách phòng (Giao thức tùy bạn, ví dụ gửi mã REQ_JOIN_ROOM kèm chuỗi trống)
+                // 1. Gửi lệnh yêu cầu danh sách phòng
                 sprintf(message, "%d|LIST", REQ_JOIN_ROOM);
                 send(sock, message, strlen(message), 0);
 
-                // 2. Đợi luồng Recv in danh sách phòng đã tham gia & danh sách mời
+                // 2. Đợi luồng Recv cập nhật danh sách (joined_room_count và joined_rooms)
                 usleep(500000);
 
-                // 3. Hiển thị lại các lời mời đang chờ (nếu có) để người dùng chọn luôn
+                // 3. Hiển thị lại các lời mời đang chờ (nếu có)
                 if (room_invite_count > 0)
                 {
                     printf("\n\033[1;33m--- LOI MOI DANG CHO ---\033[0m\n");
@@ -455,7 +457,7 @@ void send_msg_handler(int sock)
                     printf("------------------------\n");
                 }
 
-                // 4. Cho phép nhập lựa chọn ngay tại đây
+                // 4. Cho phép nhập lựa chọn
                 printf("\n>>> Nhap phim tat (J1, Y1...) hoac ten phong (Go 'B' de quay lai): ");
                 fflush(stdout);
 
@@ -468,40 +470,70 @@ void send_msg_handler(int sock)
 
                 if (strcmp(sub_input, "B") == 0 || strcmp(sub_input, "b") == 0)
                 {
-                    continue; // Thoát ra menu chính ngay lập tức
+                    continue;
                 }
 
-                // Xử lý phím tắt J (Phòng đã tham gia)
+                // --- ĐOẠN SỬA: Xử lý phím tắt J (Vào thẳng phòng chat) ---
                 if ((sub_input[0] == 'J' || sub_input[0] == 'j') && strlen(sub_input) > 1)
                 {
                     int idx = atoi(&sub_input[1]) - 1;
                     if (idx >= 0 && idx < joined_room_count)
                     {
-                        strcpy(target_name, joined_rooms[idx]);
+                        strcpy(target_name, joined_rooms[idx]); // Lấy đúng tên phòng từ danh sách
                         sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
                         send(sock, message, strlen(message), 0);
-                        // current_state = STATE_CHAT_ROOM;
+
+                        // Vào thẳng trạng thái chat luôn không cần chờ
+                        current_state = STATE_CHAT_ROOM;
+                    }
+                    else
+                    {
+                        printf("\n[LOI]: Phim tat J%d khong hop le hoac phong chua tai xong!\n", idx + 1);
                     }
                 }
-                // Xử lý phím tắt Y (Lời mời mới)
+                // --- ĐOẠN SỬA: Xử lý phím tắt Y (Chỉ chấp nhận lời mời, KHÔNG vào chat) ---
                 else if ((sub_input[0] == 'Y' || sub_input[0] == 'y') && strlen(sub_input) > 1)
                 {
                     int idx = atoi(&sub_input[1]) - 1;
                     if (idx >= 0 && idx < room_invite_count)
                     {
-                        strcpy(target_name, pending_rooms[idx]);
-                        sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
+                        // 1. Gửi lệnh join để server ghi nhận thành viên
+                        sprintf(message, "%d|%s", REQ_JOIN_ROOM, pending_rooms[idx]);
                         send(sock, message, strlen(message), 0);
-                        current_state = STATE_CHAT_ROOM;
+
+                        // 2. Xóa khỏi danh sách chờ trên Client (Xử lý lỗi Y1 vẫn hiện sau khi nhấn)
+                        for (int i = idx; i < room_invite_count - 1; i++)
+                        {
+                            strcpy(pending_rooms[i], pending_rooms[i + 1]);
+                        }
+                        room_invite_count--;
+
+                        // Ở lại menu này, người dùng muốn vào thì phải dùng phím J sau đó
+                        printf("\n[THONG BAO]: Da chap nhan loi mời. Dung phím 'J' để vào chat.\n");
+                    }
+                    else
+                    {
+                        printf("\n[LOI]: Phim tat Y%d khong hop le!\n", idx + 1);
                     }
                 }
-                // Nếu họ vẫn muốn nhập tên thủ công
+                // --- ĐOẠN SỬA: Nhập tên thủ công hoặc xử lý lỗi gõ sai phím tắt (Lỗi "j2") ---
                 else
                 {
-                    strcpy(target_name, sub_input);
-                    sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
-                    send(sock, message, strlen(message), 0);
-                    current_state = STATE_CHAT_ROOM;
+                    // Kiểm tra nếu người dùng gõ nhầm (ví dụ 'j9' khi chỉ có 2 phòng)
+                    // thì không được coi 'j9' là tên phòng thật.
+                    if (sub_input[0] == 'J' || sub_input[0] == 'j' || sub_input[0] == 'Y' || sub_input[0] == 'y')
+                    {
+                        printf("\n[LOI]: Phim tat khong ton tai. Vui long kiem tra lai danh sach.\n");
+                    }
+                    else
+                    {
+                        // Nếu là tên phòng thật thì mới gán target_name và vào chat
+                        strcpy(target_name, sub_input);
+                        sprintf(message, "%d|%s", REQ_JOIN_ROOM, target_name);
+                        send(sock, message, strlen(message), 0);
+
+                        current_state = STATE_CHAT_ROOM;
+                    }
                 }
             }
             else if (choice == 4)
