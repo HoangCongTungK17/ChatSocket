@@ -5,6 +5,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <pthread.h>
+#include <dirent.h> // Can thiet de quet thu muc
+
+static pthread_mutex_t user_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Đường dẫn tương đối từ thư mục chạy file thực thi (server_app)
 // Đảm bảo bạn đã tạo thư mục: server/data/user_data
@@ -38,53 +42,64 @@ void save_next_id(int id)
 // Logic kiểm tra đăng nhập
 int check_login(const char *username, const char *password)
 {
+    pthread_mutex_lock(&user_mutex); // <--- KHOA
+
     char info_path[512];
-    // Đường dẫn file: server/data/user_data/username/info.txt
     sprintf(info_path, "%s/%s/info.txt", DATA_DIR, username);
 
     // 1. Kiểm tra file tồn tại
     if (access(info_path, F_OK) == -1)
     {
-        return -1; // User không tồn tại
+        pthread_mutex_unlock(&user_mutex); // [QUAN TRONG] Mo khoa truoc khi return
+        return -1;
     }
 
-    // 2. Đọc file để lấy pass
+    // 2. Đọc file
     FILE *f = fopen(info_path, "r");
     if (!f)
+    {
+        pthread_mutex_unlock(&user_mutex); // [QUAN TRONG] Mo khoa
         return -1;
+    }
 
     int file_id = -1;
     char file_pass[64] = "";
-
     char line[256];
+
     while (fgets(line, sizeof(line), f))
     {
-        // Xử lý dòng chứa ID:
         if (strstr(line, "ID:"))
         {
             sscanf(line, "ID:%d", &file_id);
         }
-        // Xử lý dòng chứa PASSWORD:
         else if (strstr(line, "PASSWORD:"))
         {
-            sscanf(line, "PASSWORD:%s", file_pass);
-            // Xóa ký tự xuống dòng nếu có
-            file_pass[strcspn(file_pass, "\n")] = 0;
+            // Sửa lỗi đọc pass có khoảng trắng
+            char *pass_ptr = strchr(line, ':');
+            if (pass_ptr)
+            {
+                strcpy(file_pass, pass_ptr + 1);
+                file_pass[strcspn(file_pass, "\n")] = 0;
+            }
         }
     }
     fclose(f);
 
-    // 3. So sánh pass
+    // [QUAN TRONG] Mo khoa sau khi doc xong file
+    pthread_mutex_unlock(&user_mutex);
+
+    // 3. So sánh pass (Thực hiện khi da mo khoa cho nguoi khac dung)
     if (strlen(file_pass) > 0 && strcmp(file_pass, password) == 0)
     {
         return file_id;
     }
-    return -1; // Sai pass hoặc lỗi file
+    return -1;
 }
 
 // Logic đăng ký
 int register_user(const char *username, const char *password)
 {
+    pthread_mutex_lock(&user_mutex);
     char user_dir[512];
     sprintf(user_dir, "%s/%s", DATA_DIR, username);
 
@@ -92,6 +107,7 @@ int register_user(const char *username, const char *password)
     struct stat st = {0};
     if (stat(user_dir, &st) != -1)
     {
+        pthread_mutex_unlock(&user_mutex);
         return 0; // Đã tồn tại
     }
 
@@ -100,6 +116,7 @@ int register_user(const char *username, const char *password)
     if (mkdir(user_dir, 0700) == -1)
     {
         perror("Cannot create user directory");
+        pthread_mutex_unlock(&user_mutex);
         return 0;
     }
 
@@ -119,8 +136,10 @@ int register_user(const char *username, const char *password)
 
         // Cập nhật ID cho người sau
         save_next_id(new_id + 1);
+        pthread_mutex_unlock(&user_mutex);
         return 1; // Thành công
     }
+    pthread_mutex_unlock(&user_mutex);
     return 0; // Thất bại
 }
 
@@ -128,13 +147,16 @@ int register_user(const char *username, const char *password)
 // Return: 1 (Success), 0 (Fail/User not found), 2 (Already friend/Requested)
 int send_friend_request(const char *sender, const char *receiver)
 {
+    pthread_mutex_lock(&user_mutex);
     char receiver_path[512];
     sprintf(receiver_path, "%s/%s/info.txt", DATA_DIR, receiver);
 
     // 1. Check user tồn tại
     if (access(receiver_path, F_OK) == -1)
+    {
+        pthread_mutex_unlock(&user_mutex);
         return 0; // Không tồn tại
-
+    }
     // 2. Check xem đã là bạn chưa
     char friend_file[512];
     sprintf(friend_file, "%s/%s/friend.txt", DATA_DIR, sender);
@@ -148,6 +170,7 @@ int send_friend_request(const char *sender, const char *receiver)
             if (strcmp(line, receiver) == 0)
             {
                 fclose(f);
+                pthread_mutex_unlock(&user_mutex);
                 return 2;
             } // Đã là bạn
         }
@@ -169,6 +192,7 @@ int send_friend_request(const char *sender, const char *receiver)
             if (strcmp(line, sender) == 0)
             {
                 fclose(f);
+                pthread_mutex_unlock(&user_mutex);
                 return 2;
             }
         }
@@ -180,8 +204,10 @@ int send_friend_request(const char *sender, const char *receiver)
     {
         fprintf(f, "%s\n", sender);
         fclose(f);
+        pthread_mutex_unlock(&user_mutex);
         return 1;
     }
+    pthread_mutex_unlock(&user_mutex);
     return 0;
 }
 
@@ -189,6 +215,7 @@ int send_friend_request(const char *sender, const char *receiver)
 // Logic: Xóa khỏi listreq.txt -> Thêm vào friend.txt của CẢ 2 NGƯỜI
 int accept_friend_request(const char *me, const char *sender)
 {
+    pthread_mutex_lock(&user_mutex);
     char req_file[512], friend_file_me[512], friend_file_sender[512];
     sprintf(req_file, "%s/%s/listreq.txt", DATA_DIR, me);
     sprintf(friend_file_me, "%s/%s/friend.txt", DATA_DIR, me);
@@ -197,7 +224,10 @@ int accept_friend_request(const char *me, const char *sender)
     // 1. Đọc list request và loại bỏ sender
     FILE *f = fopen(req_file, "r");
     if (!f)
+    {
+        pthread_mutex_unlock(&user_mutex);
         return 0; // Không có file request
+    }
 
     char buffer[4096] = ""; // Buffer tạm lưu nội dung file mới
     char line[MAX_USERNAME];
@@ -219,7 +249,10 @@ int accept_friend_request(const char *me, const char *sender)
     fclose(f);
 
     if (!found)
+    {
+        pthread_mutex_unlock(&user_mutex);
         return 0; // Không thấy lời mời
+    }
 
     // Ghi lại file listreq (đã xóa sender)
     f = fopen(req_file, "w");
@@ -244,13 +277,14 @@ int accept_friend_request(const char *me, const char *sender)
         fprintf(f, "%s\n", me);
         fclose(f);
     }
-
+    pthread_mutex_unlock(&user_mutex);
     return 1;
 }
 
 // Lấy danh sách lời mời kết bạn
 void get_friend_requests(const char *username, char *buffer)
 {
+    pthread_mutex_lock(&user_mutex);
     char path[512];
     sprintf(path, "%s/%s/listreq.txt", DATA_DIR, username);
     FILE *f = fopen(path, "r");
@@ -274,11 +308,9 @@ void get_friend_requests(const char *username, char *buffer)
     {
         strcpy(buffer, "No requests.");
     }
+    pthread_mutex_unlock(&user_mutex);
 }
-// [File: server/libs/user_manager.c hoặc cuối server/main.c]
-#include <dirent.h> // Can thiet de quet thu muc
 
-// Hoang Tung Sua - Cap nhat theo cau truc thu muc cua ban
 void get_user_joined_rooms_server(const char *username, char *output)
 {
     char chat_dir[] = "server/data/chat_data";
@@ -291,7 +323,6 @@ void get_user_joined_rooms_server(const char *username, char *output)
 
     while ((entry = readdir(dp)))
     {
-        // Chỉ tìm các file bắt đầu bằng "ROOM_" và kết thúc bằng ".txt"
         if (strncmp(entry->d_name, "ROOM_", 5) == 0 && strstr(entry->d_name, ".txt"))
         {
             char path[1024];
@@ -301,37 +332,52 @@ void get_user_joined_rooms_server(const char *username, char *output)
             if (f)
             {
                 char line[256];
-                // Giả sử dòng đầu tiên của file ROOM_ là danh sách thành viên
-                // Hoặc bạn quét toàn bộ file để xem username có từng nhắn tin/tham gia không
-                if (fgets(line, sizeof(line), f))
+                int is_member = 0; // Trạng thái: 0 là không, 1 là có
+
+                // Quét từng dòng để xem lịch sử tham gia/rời
+                while (fgets(line, sizeof(line), f))
                 {
-                    // Logic này tùy thuộc vào cách bạn ghi file.
-                    // Ở đây tôi ví dụ quét xem username có xuất hiện trong file hay không
-                    int found = 0;
-                    rewind(f);
-                    while (fgets(line, sizeof(line), f))
+                    // 1. Nếu là người tạo phòng
+                    // Format: ... duoc tao boi tung
+                    char check_create[256];
+                    sprintf(check_create, "duoc tao boi %s", username);
+                    if (strstr(line, check_create))
                     {
-                        if (strstr(line, username))
-                        {
-                            found = 1;
-                            break;
-                        }
+                        is_member = 1;
                     }
 
-                    if (found)
+                    // 2. Nếu tham gia
+                    // Format: [HE THONG] tung da tham gia phong
+                    char check_join[256];
+                    sprintf(check_join, "[HE THONG] %s da tham gia phong", username);
+                    if (strstr(line, check_join))
                     {
-                        char room_name[128];
-                        // Cắt chữ "ROOM_" (5 ký tự) và đuôi ".txt" (4 ký tự)
-                        int name_len = strlen(entry->d_name) - 5 - 4;
-                        strncpy(room_name, entry->d_name + 5, name_len);
-                        room_name[name_len] = '\0';
+                        is_member = 1;
+                    }
 
-                        if (strlen(output) > 0)
-                            strcat(output, ", ");
-                        strcat(output, room_name);
+                    // 3. Nếu rời phòng
+                    // Format: [HE THONG] tung da roi phong
+                    char check_leave[256];
+                    sprintf(check_leave, "[HE THONG] %s da roi phong", username);
+                    if (strstr(line, check_leave))
+                    {
+                        is_member = 0;
                     }
                 }
                 fclose(f);
+
+                // Nếu sau khi đọc hết file, user vẫn là member thì mới thêm vào list
+                if (is_member)
+                {
+                    char room_name[128];
+                    int name_len = strlen(entry->d_name) - 5 - 4;
+                    strncpy(room_name, entry->d_name + 5, name_len);
+                    room_name[name_len] = '\0';
+
+                    if (strlen(output) > 0)
+                        strcat(output, ", ");
+                    strcat(output, room_name);
+                }
             }
         }
     }

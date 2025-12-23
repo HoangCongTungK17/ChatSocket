@@ -500,3 +500,126 @@ user1 - [ONLINE]
 
 [2025-12-22 17:28:02] User 'tung' da ngat ket noi.
 [2025-12-22 17:28:03] User 'user1' da ngat ket noi.
+[2025-12-23 23:26:42] Server started on port 5500...
+[2025-12-23 23:27:06] Co ket noi moi tu socket: 4
+[2025-12-23 23:27:40] Co ket noi moi tu socket: 5
+[2025-12-23 23:27:50] 1|tung|123
+[2025-12-23 23:27:50] 100|Login successful!
+[2025-12-23 23:28:04] 2|user2|123
+[2025-12-23 23:28:04] 100|Signup successful!
+[2025-12-23 23:28:15] 1|user2|123
+[2025-12-23 23:28:15] 100|Login successful!
+[2025-12-23 23:28:25] 5|user2
+[2025-12-23 23:28:25] 5|tung
+[2025-12-23 23:28:25] 100|Request sent to user2
+[2025-12-23 23:28:32] 6|
+[2025-12-23 23:28:32] 102|Danh sach loi moi: tung, 
+(HD: Chon lai muc 7 va nhap ten de chap nhan)
+[2025-12-23 23:28:42] 6|tung
+[2025-12-23 23:28:42] 100|You are now friends with tung
+[2025-12-23 23:28:49] 4|
+[2025-12-23 23:28:49] 102|--- FRIEND LIST ---
+tung - [ONLINE]
+
+[2025-12-23 23:28:55] 4|
+[2025-12-23 23:28:55] 102|--- FRIEND LIST ---
+user1 - [OFFLINE]
+user2 - [ONLINE]
+
+[2025-12-23 23:29:57] 9|ltm
+[2025-12-23 23:29:57] 100|Room 'ltm' created.
+[2025-12-23 23:30:18] 10|user2|ltm
+[2025-12-23 23:30:18] 10|tung|ltm
+[2025-12-23 23:30:18] 100|Invitation sent to user2
+[2025-12-23 23:30:32] 11|LIST
+[2025-12-23 23:30:32] 102|Danh sach phong: 
+[2025-12-23 23:30:44] 11|ltm
+[2025-12-23 23:30:44] 100|Joined room 'ltm' successfully
+[2025-12-23 23:30:54] 11|LIST
+[2025-12-23 23:30:54] 102|Danh sach phong: ltm
+[2025-12-23 23:31:01] 11|ltm
+[2025-12-23 23:31:01] 100|You are already in room 'ltm'
+[2025-12-23 23:37:52] User 'tung' da ngat ket noi.
+[2025-12-23 23:37:53] User 'user2' da ngat ket noi.
+[2025-12-23 23:41:05] Server started on port 5500...
+[2025-12-23 23:41:26] Co ket noi moi tu socket: 4
+[2025-12-23 23:41:49] Co ket noi moi tu socket: 5
+[2025-12-23 23:42:29] 1|tung|123
+[2025-12-23 23:42:29] 100|Login successful!
+[2025-12-23 23:42:49] 9|haha
+[2025-12-23 23:42:49] 100|Room haha created.
+[2025-12-23 23:43:06] 1|user2|123
+[2025-12-23 23:43:06] 100|Login successful!
+[2025-12-23 23:43:19] 10|user2|haha
+[2025-12-23 23:43:19] 10|tung|haha
+[2025-12-23 23:43:19] 100|Invitation sent to user2
+[2025-12-23 23:43:32] 11|haha
+[2025-12-23 23:43:32] 100|Joined room haha successfully
+[2025-12-23 23:43:40] 11|LIST
+[2025-12-23 23:43:40] 102|Danh sach phong: haha, ltm
+[2025-12-23 23:43:56] 11|haha
+[2025-12-23 23:43:56] 100|You are already in room haha
+[2025-12-23 23:44:35] 10||
+[2025-12-23 23:44:35] 101|Invalid format
+[2025-12-23 23:44:43] 11|LIST
+[2025-12-23 23:44:43] 102|Danh sach phong: haha, ltm
+[2025-12-23 23:44:47] 11|haha
+[2025-12-23 23:44:47] 100|You are already in room haha
+[2025-12-23 23:44:53] 12|haha
+[2025-12-23 23:44:53] 100|Left room haha
+[2025-12-23 23:45:09] 11|LIST
+[2025-12-23 23:45:09] 102|Danh sach phong: haha, ltm
+[2025-12-23 23:46:19] 11|LIST
+[2025-12-23 23:46:19] 102|Danh sach phong: haha, ltm
+[2025-12-24 00:26:49] User tung da ngat ket noi.
+[2025-12-24 00:26:50] User user2 da ngat ket noi.
+[2025-12-24 00:29:18] Server started on port 5500...
+[2025-12-24 00:30:11] Co ket noi moi tu socket: 4
+[2025-12-24 00:30:30] 1|tung 123|2
+[2025-12-24 00:30:30] 101|Invalid login
+[2025-12-24 00:30:35] 1|tung|123
+[2025-12-24 00:30:51] Co ket noi moi tu socket: 5
+[2025-12-24 00:31:19] 1|user2|123
+[2025-12-24 00:40:38] Server started on port 5500...
+[2025-12-24 00:41:37] Server started on port 5500...
+[2025-12-24 00:42:00] Co ket noi moi tu socket: 4
+[2025-12-24 00:42:03] 1|tung|123
+[2025-12-24 00:42:03] 100|Login successful!
+[2025-12-24 00:42:13] 11|LIST
+[2025-12-24 00:42:13] 102|Danh sach phong: nhom11, haha, ltm
+[2025-12-24 00:42:24] 11|ltm
+[2025-12-24 00:42:24] 100|You are already in room ltm
+[2025-12-24 00:42:28] 12|ltm
+[2025-12-24 00:42:28] 100|Left room ltm
+[2025-12-24 00:42:33] 11|LIST
+[2025-12-24 00:42:33] 102|Danh sach phong: nhom11, haha
+[2025-12-24 00:42:59] Co ket noi moi tu socket: 5
+[2025-12-24 00:43:03] 1|user2|123
+[2025-12-24 00:51:31] Server started on port 5500...
+[2025-12-24 00:51:43] Co ket noi moi tu socket: 4
+[2025-12-24 00:51:47] 1|tung|123
+[2025-12-24 00:51:47] 100|Login successful!
+[2025-12-24 00:51:49] 11|LIST
+[2025-12-24 00:51:49] 102|Danh sach phong: nhom11, haha
+[2025-12-24 00:52:16] Co ket noi moi tu socket: 5
+[2025-12-24 00:52:21] 1|user2|123
+[2025-12-24 00:52:21] 100|Login successful!
+[2025-12-24 00:52:37] 10||
+[2025-12-24 00:52:37] 101|Invalid format
+[2025-12-24 00:52:49] 11|LIST
+[2025-12-24 00:52:49] 102|Danh sach phong: haha, ltm
+[2025-12-24 00:52:57] 11|haha
+[2025-12-24 00:52:57] 100|You are already in room haha
+[2025-12-24 00:53:02] 12|haha
+[2025-12-24 00:53:02] 100|Left room haha
+[2025-12-24 00:53:07] 11|LIST
+[2025-12-24 00:53:07] 102|Danh sach phong: ltm
+[2025-12-24 00:55:38] 9|hihi
+[2025-12-24 00:55:38] 100|Room hihi created.
+[2025-12-24 00:56:04] 10|user2|hihi
+[2025-12-24 00:56:04] 10|tung|hihi
+[2025-12-24 00:56:04] 100|Invitation sent to user2
+[2025-12-24 00:56:34] 11|hihi
+[2025-12-24 00:56:34] 100|Joined room hihi successfully
+[2025-12-24 00:56:40] 11|LIST
+[2025-12-24 00:56:40] 102|Danh sach phong: hihi, ltm

@@ -324,8 +324,8 @@ void send_msg_handler(int sock)
                 printf("Dang cho server phan hoi...");
                 fflush(stdout);
 
-                // Vòng lặp chờ phản hồi (Timeout khoảng 2 giây)
-                int timeout = 20;
+                // Vòng lặp chờ phản hồi (Timeout khoảng 5 giây)
+                int timeout = 50;
                 while (login_success == 0 && timeout > 0)
                 {
                     usleep(100000); // Ngủ 0.1s
@@ -516,7 +516,6 @@ void send_msg_handler(int sock)
                         printf("\n[LOI]: Phim tat Y%d khong hop le!\n", idx + 1);
                     }
                 }
-                // --- ĐOẠN SỬA: Nhập tên thủ công hoặc xử lý lỗi gõ sai phím tắt (Lỗi "j2") ---
                 else
                 {
                     // Kiểm tra nếu người dùng gõ nhầm (ví dụ 'j9' khi chỉ có 2 phòng)

@@ -8,6 +8,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include "../common/protocol.h"
 #include "libs/user_manager.h"
@@ -64,6 +65,136 @@ void log_message(const char *message)
         perror("Ly do loi"); // In chi tiết lỗi hệ thống (Permission denied, No such file...)
     }
     pthread_mutex_unlock(&log_mutex);
+}
+// --- HÀM KHÔI PHỤC PHÒNG TỪ FILE (ĐÃ SỬA LỖI ZOMBIE) ---
+void load_rooms_from_file()
+{
+    // printf("[SYSTEM] Dang tai lai danh sach phong tu file...\n");
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(CHAT_DATA_DIR);
+    if (!d)
+        return;
+
+    while ((dir = readdir(d)) != NULL)
+    {
+        // 1. Kiểm tra file có phải là ROOM_...txt không
+        if (strncmp(dir->d_name, "ROOM_", 5) == 0 && strstr(dir->d_name, ".txt"))
+        {
+            // 2. Lấy tên phòng từ tên file
+            char room_name[64];
+            int name_len = strlen(dir->d_name) - 5 - 4; // Trừ "ROOM_" (5) và ".txt" (4)
+            if (name_len <= 0 || name_len >= 64)
+                continue;
+
+            strncpy(room_name, dir->d_name + 5, name_len);
+            room_name[name_len] = '\0';
+
+            // 3. Tìm slot trống trong mảng chat_rooms
+            int idx = -1;
+            for (int i = 0; i < MAX_ROOMS; i++)
+            {
+                if (strlen(chat_rooms[i].name) == 0)
+                {
+                    idx = i;
+                    strcpy(chat_rooms[idx].name, room_name);
+                    chat_rooms[idx].count = 0;
+                    break;
+                }
+            }
+
+            if (idx == -1)
+                continue; // Hết slot chứa phòng
+
+            // 4. Đọc file để lấy danh sách thành viên
+            char filepath[512];
+            sprintf(filepath, "%s/%s", CHAT_DATA_DIR, dir->d_name);
+            FILE *f = fopen(filepath, "r");
+            if (f)
+            {
+                char line[256];
+                while (fgets(line, sizeof(line), f))
+                {
+                    char username[MAX_USERNAME];
+                    int action = 0; // 0: Bỏ qua, 1: Thêm, -1: Xóa
+
+                    // Case A: Người tạo phòng (Thêm)
+                    char *ptr = strstr(line, "duoc tao boi ");
+                    if (ptr)
+                    {
+                        strcpy(username, ptr + 13);
+                        username[strcspn(username, "\n")] = 0;
+                        action = 1;
+                    }
+                    // Case B: Người tham gia (Thêm)
+                    else if ((ptr = strstr(line, "[HE THONG] ")) && strstr(line, " da tham gia phong"))
+                    {
+                        char *start = line + 11;
+                        char *end = strstr(line, " da tham gia phong");
+                        int len = end - start;
+                        if (len > 0 && len < MAX_USERNAME)
+                        {
+                            strncpy(username, start, len);
+                            username[len] = '\0';
+                            action = 1;
+                        }
+                    }
+                    // Case C: Người rời phòng (Xóa) --> [LOGIC MỚI]
+                    else if ((ptr = strstr(line, "[HE THONG] ")) && strstr(line, " da roi phong"))
+                    {
+                        char *start = line + 11;
+                        char *end = strstr(line, " da roi phong");
+                        int len = end - start;
+                        if (len > 0 && len < MAX_USERNAME)
+                        {
+                            strncpy(username, start, len);
+                            username[len] = '\0';
+                            action = -1;
+                        }
+                    }
+
+                    // --- THỰC HIỆN HÀNH ĐỘNG TRÊN RAM ---
+                    if (action == 1) // Thêm user
+                    {
+                        int exists = 0;
+                        for (int k = 0; k < chat_rooms[idx].count; k++)
+                        {
+                            if (strcmp(chat_rooms[idx].members[k], username) == 0)
+                            {
+                                exists = 1;
+                                break;
+                            }
+                        }
+                        if (!exists && chat_rooms[idx].count < MAX_ROOM_MEMBERS)
+                        {
+                            strcpy(chat_rooms[idx].members[chat_rooms[idx].count], username);
+                            chat_rooms[idx].count++;
+                        }
+                    }
+                    else if (action == -1) // Xóa user
+                    {
+                        for (int k = 0; k < chat_rooms[idx].count; k++)
+                        {
+                            if (strcmp(chat_rooms[idx].members[k], username) == 0)
+                            {
+                                // Dồn mảng để xóa phần tử k
+                                for (int m = k; m < chat_rooms[idx].count - 1; m++)
+                                {
+                                    strcpy(chat_rooms[idx].members[m], chat_rooms[idx].members[m + 1]);
+                                }
+                                chat_rooms[idx].count--;
+                                break; // Đã xóa xong, thoát vòng lặp
+                            }
+                        }
+                    }
+                }
+                fclose(f);
+                // printf(" -> Da tai phong '%s' voi %d thanh vien.\n", room_name, chat_rooms[idx].count);
+            }
+        }
+    }
+    closedir(d);
 }
 
 void send_packet(int socket, const char *packet)
@@ -164,7 +295,7 @@ int create_room_server(const char *room_name, const char *owner_name)
             FILE *f = fopen(path, "a"); // "a" sẽ tạo file nếu chưa có
             if (f)
             {
-                fprintf(f, "[HE THONG] Phong '%s' duoc tao boi %s\n", room_name, owner_name);
+                fprintf(f, "[HE THONG] Phong %s duoc tao boi %s\n", room_name, owner_name);
                 fclose(f);
             }
 
@@ -253,6 +384,7 @@ int join_room_server(const char *room_name, const char *username)
 }
 
 // Hàm xóa thành viên khỏi phòng
+// Tìm hàm leave_room_server và sửa đoạn cuối như sau:
 int leave_room_server(const char *room_name, const char *username)
 {
     pthread_mutex_lock(&rooms_mutex);
@@ -260,7 +392,7 @@ int leave_room_server(const char *room_name, const char *username)
     if (idx == -1)
     {
         pthread_mutex_unlock(&rooms_mutex);
-        return -1; // Không tìm thấy phòng
+        return -1;
     }
 
     int found = 0;
@@ -269,17 +401,29 @@ int leave_room_server(const char *room_name, const char *username)
         if (strcmp(chat_rooms[idx].members[i], username) == 0)
         {
             found = 1;
-            // Xóa bằng cách dịch chuyển các phần tử phía sau lên
+            // Xóa khỏi RAM (Code cũ của bạn)
             for (int j = i; j < chat_rooms[idx].count - 1; j++)
             {
                 strcpy(chat_rooms[idx].members[j], chat_rooms[idx].members[j + 1]);
             }
             chat_rooms[idx].count--;
+
+            // ---  Ghi log rời phòng vào file ---
+            char path[1024];
+            sprintf(path, "server/data/chat_data/ROOM_%s.txt", room_name);
+            FILE *f = fopen(path, "a");
+            if (f)
+            {
+                // Đánh dấu để hàm load nhận biết
+                fprintf(f, "[HE THONG] %s da roi phong.\n", username);
+                fclose(f);
+            }
+            // ------------------------------------------
             break;
         }
     }
     pthread_mutex_unlock(&rooms_mutex);
-    return found ? 1 : 0; // 1: Thành công, 0: Không có trong phòng
+    return found ? 1 : 0;
 }
 
 // [BỔ SUNG] Hàm dọn dẹp user khỏi tất cả các phòng khi ngắt kết nối
@@ -359,7 +503,7 @@ void handle_group_chat(const char *sender, const char *room_name, const char *ms
         if (sender_sock != -1)
         {
             char error_pkt[BUFF_SIZE];
-            sprintf(error_pkt, "%d|Room '%s' not found or you are not a member.", RES_ERROR, room_name);
+            sprintf(error_pkt, "%d|Room %s not found or you are not a member.", RES_ERROR, room_name);
             send_packet(sender_sock, error_pkt);
         }
     }
@@ -534,7 +678,7 @@ void *connection_handler(void *socket_desc)
             {
                 int res = create_room_server(room_name, current_username);
                 if (res == 1)
-                    sprintf(response, "%d|Room '%s' created.", RES_SUCCESS, room_name);
+                    sprintf(response, "%d|Room %s created.", RES_SUCCESS, room_name);
                 else
                     sprintf(response, "%d|Room exists or full.", RES_ERROR);
             }
@@ -676,9 +820,9 @@ void *connection_handler(void *socket_desc)
                     // ---  VÀO PHÒNG THẬT SỰ ---
                     int res = join_room_server(room_name, current_username);
                     if (res == 1)
-                        sprintf(response, "%d|Joined room '%s' successfully", RES_SUCCESS, room_name);
+                        sprintf(response, "%d|Joined room %s successfully", RES_SUCCESS, room_name);
                     else if (res == 2)
-                        sprintf(response, "%d|You are already in room '%s'", RES_SUCCESS, room_name);
+                        sprintf(response, "%d|You are already in room %s", RES_SUCCESS, room_name);
                     else
                         sprintf(response, "%d|Room not found", RES_ERROR);
                 }
@@ -698,9 +842,9 @@ void *connection_handler(void *socket_desc)
             if (current_user_id != -1 && room_name)
             {
                 if (leave_room_server(room_name, current_username))
-                    sprintf(response, "%d|Left room '%s'", RES_SUCCESS, room_name);
+                    sprintf(response, "%d|Left room %s", RES_SUCCESS, room_name);
                 else
-                    sprintf(response, "%d|You are not in room '%s'", RES_ERROR, room_name);
+                    sprintf(response, "%d|You are not in room %s", RES_ERROR, room_name);
             }
             send_packet(sock, response);
             break;
@@ -785,7 +929,7 @@ void *connection_handler(void *socket_desc)
         printf("User %s disconnected.\n", current_username);
 
         char log_buf[200];
-        sprintf(log_buf, "User '%s' da ngat ket noi.", current_username);
+        sprintf(log_buf, "User %s da ngat ket noi.", current_username);
         log_message(log_buf);
     }
 
@@ -822,6 +966,8 @@ int main()
     log_message("Server started on port 5500...");
     mkdir("server/data", 0700);
     mkdir(CHAT_DATA_DIR, 0700);
+
+    load_rooms_from_file();
 
     while (1)
     {
