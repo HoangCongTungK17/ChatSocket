@@ -785,7 +785,8 @@ void *connection_handler(void *socket_desc)
                 {
                     char invite_msg[BUFF_SIZE];
                     sprintf(invite_msg, "%d|%s|%s", REQ_INVITE_ROOM, current_username, room_name);
-                    send_packet(dest_sock, invite_msg);
+                    //send_packet(dest_sock, invite_msg);
+                    send(dest_sock, invite_msg, strlen(invite_msg), 0);
                     sprintf(response, "%d|Invitation sent to %s", RES_SUCCESS, target_user);
                 }
                 else

@@ -1,5 +1,5 @@
 Biên dịch
-
+rm server_app client_app
 gcc server/main.c server/libs/user_manager.c -o server_app -pthread
 gcc client/main.c -o client_app -pthread
 
